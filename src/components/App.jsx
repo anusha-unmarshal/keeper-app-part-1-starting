@@ -25,11 +25,22 @@ function App() {
     // function editNote(id){
 
     // }
-    // function onSaveText() {
-    //     const onSave = val => {
-    //         console.log('Edited Value -> ', val)
-    //       }
-    // }
+    function onSaveText(id, editedContent) {
+        const newList = notes.map((item) => {
+            if (item.id === id) {
+              const updatedItem = {
+                ...item,
+                content : editedContent
+              };
+       
+              return updatedItem;
+            }
+       
+            return item;
+          });
+       
+          setNotes(newList);
+    }
     
     return (
         <div>
@@ -43,6 +54,7 @@ function App() {
                 content={note.content}
                 onDelete={deleteNote}
                 // onedit={editNote}
+                onSave={onSaveText}
             />);
         })}
         {/* <EdiText 

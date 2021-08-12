@@ -12,11 +12,11 @@ function Note(props) {
     const [content, updateContent] = useState(props.content);
     function handleChange(event) {
         updateContent(event.target.value);
+        props.onSave(props.id,content);
     }
 
     function saveNote(){
-        // props.onDelete(props.id);
-        // props.onAdd(newNote);
+        props.onSave(props.id,content);
         setEditValue(false);
 
     }
