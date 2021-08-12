@@ -12,7 +12,7 @@ function Note(props) {
     const [content, updateContent] = useState(props.content);
     function handleChange(event) {
         updateContent(event.target.value);
-        props.onSave(props.id,content);
+        // props.onSave(props.id,content);
     }
 
     function saveNote(){
@@ -22,6 +22,7 @@ function Note(props) {
     }
     return (
         <div className="note">
+            {/* <p>{props.id}</p> */}
             <h1>{props.title}</h1>
             {!edit ?
             <p>{props.content}</p> :

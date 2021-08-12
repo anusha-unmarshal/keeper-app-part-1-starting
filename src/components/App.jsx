@@ -26,8 +26,10 @@ function App() {
 
     // }
     function onSaveText(id, editedContent) {
-        const newList = notes.map((item) => {
-            if (item.id === id) {
+        // console.log(id);
+        const newList = notes.map((item, index) => {
+            if (index === id) {
+                // console.log(item.id);
               const updatedItem = {
                 ...item,
                 content : editedContent
