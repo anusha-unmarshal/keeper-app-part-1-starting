@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// TO-DO: Notes[post], Notes/{id}[put,delete],
+// TO-DO:  Notes/{id}[put,delete],
 // import
 // import "github.com/gorilla/mux"
 
@@ -66,18 +66,22 @@ func fetchAllTasks(w http.ResponseWriter, r *http.Request) {
 
 }
 func pageNotFoundHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "text/plain")
+	// w.Header().Add("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusNotFound)
-	fmt.Fprintf(w, "Error 404, Page not found")
+	t := struct {
+		Msg string `json:"message"`
+	}{Msg :"Error 404, Page not found"}
+	msg,_ := json.Marshal(t)
+	w.Write(msg)
+
+	// fmt.Fprintf(w, "Error 404, Page not found")
 
 }
 func fetchTaskById(w http.ResponseWriter, r *http.Request) {
-	id,_ := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
-	// var Stat bool = false
+	id, _ := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 
 	for _, noteItem := range noteList {
 		if noteItem.Key == id {
-
 
 			marshalledTask, err := json.Marshal(noteItem)
 			if err != nil {
@@ -85,17 +89,36 @@ func fetchTaskById(w http.ResponseWriter, r *http.Request) {
 			} else {
 				w.Write(marshalledTask)
 			}
-			// w.Header().Add("")
 
 			return
 		}
 
 	}
-	pageNotFoundHandler(w,r)
-	
-
+	pageNotFoundHandler(w, r)
 
 }
+func errHandler(w http.ResponseWriter, err error) {
+	w.Header().Add("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusBadRequest)
+	fmt.Fprintln(w, "There was an error")
+	fmt.Fprint(w, err)
+
+}
+
+func addTask(w http.ResponseWriter, r *http.Request) {
+	d := json.NewDecoder(r.Body)
+	d.DisallowUnknownFields()
+	var item Note
+	err := d.Decode(&item)
+	if err != nil {
+		errHandler(w, err)
+		return
+	}
+	noteList = append(noteList, item)
+	// fmt.Println(item)
+
+}	
+
 
 func main() {
 	homeRouter := mux.NewRouter()
@@ -105,7 +128,11 @@ func main() {
 	noteRouter.Use(jsonWrapper)
 
 	noteRouter.HandleFunc("/task/", fetchAllTasks).Methods("GET")
+	noteRouter.HandleFunc("/task/", addTask).Methods("POST")
+
 	noteRouter.HandleFunc("/task/{id}", fetchTaskById).Methods("GET")
+	// noteRouter.HandleFunc("/task/{id}", modifyTask).Methods("PUT")
+
 	http.Handle("/", homeRouter)
 	// http.HandleFunc("/", HomeHandler)
 	log.Fatal(http.ListenAndServe(":8000", nil))
