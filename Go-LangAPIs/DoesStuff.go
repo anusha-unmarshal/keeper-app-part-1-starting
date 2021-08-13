@@ -9,9 +9,6 @@ import (
 	"strconv"
 )
 
-// TO-DO:  Notes/{id}[delete],
-// import
-// import "github.com/gorilla/mux"
 
 type Note struct {
 	Key     int64  `json:"key"`
@@ -110,6 +107,7 @@ func addTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	noteList = append(noteList, item)
+	w.WriteHeader(http.StatusCreated)
 	// fmt.Println(item)
 
 }
@@ -130,13 +128,36 @@ func modifyTask(w http.ResponseWriter, r *http.Request) {
 	}
 	for index, noteItem := range noteList {
 		if noteItem.Key == id {
-			noteList[index] = updateItem
+			if updateItem.Title != "" {
+				noteList[index].Title = updateItem.Title
+			}
+			if updateItem.Content != "" {
+				noteList[index].Content = updateItem.Content
+			}
+			w.WriteHeader(http.StatusOK)
 			return
 		}
 	}
-	pageNotFoundHandler(w, r)
+	noteList = append(noteList, updateItem)
+	w.WriteHeader(http.StatusCreated)
 }
 
+func removeNoteFromList(i int) {
+	noteList[i] = noteList[len(noteList)-1]
+	noteList = noteList[:len(noteList)-1]
+}
+
+func removeTask(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
+	for index, noteItem := range noteList {
+		if noteItem.Key == id {
+			removeNoteFromList(index)
+			w.WriteHeader(http.StatusNoContent)
+		}
+	}
+	pageNotFoundHandler(w, r)
+
+}
 
 func main() {
 	homeRouter := mux.NewRouter()
@@ -150,8 +171,7 @@ func main() {
 
 	noteRouter.HandleFunc("/task/{id}", fetchTaskById).Methods("GET")
 	noteRouter.HandleFunc("/task/{id}", modifyTask).Methods("PUT")
-	// noteRouter.HandleFunc("/task/{id}", removeTask).Methods("DELETE")
-
+	noteRouter.HandleFunc("/task/{id}", removeTask).Methods("DELETE")
 
 	http.Handle("/", homeRouter)
 	log.Fatal(http.ListenAndServe(":8000", nil))
