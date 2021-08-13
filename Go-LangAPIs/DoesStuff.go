@@ -3,14 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
-
-	"github.com/gorilla/mux"
 )
 
-// TO-DO:  Notes/{id}[put,delete],
+// TO-DO:  Notes/{id}[delete],
 // import
 // import "github.com/gorilla/mux"
 
@@ -54,7 +53,6 @@ func jsonWrapper(next http.Handler) http.Handler {
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "You're on the homepage")
-
 }
 func fetchAllTasks(w http.ResponseWriter, r *http.Request) {
 	marshalledTask, err := json.Marshal(noteList)
@@ -63,19 +61,15 @@ func fetchAllTasks(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.Write(marshalledTask)
 	}
-
 }
 func pageNotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	// w.Header().Add("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusNotFound)
 	t := struct {
 		Msg string `json:"message"`
-	}{Msg :"Error 404, Page not found"}
-	msg,_ := json.Marshal(t)
+	}{Msg: "Error 404, Page not found"}
+	msg, _ := json.Marshal(t)
 	w.Write(msg)
-
-	// fmt.Fprintf(w, "Error 404, Page not found")
-
 }
 func fetchTaskById(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
@@ -98,18 +92,19 @@ func fetchTaskById(w http.ResponseWriter, r *http.Request) {
 
 }
 func errHandler(w http.ResponseWriter, err error) {
-	w.Header().Add("Content-Type", "text/plain")
+	// w.Header().Add("Content-Type", "text/plain")
+	ms := fmt.Sprintln(err)
+	t := struct {
+		Msg string `json:"message"`
+	}{Msg: ms}
 	w.WriteHeader(http.StatusBadRequest)
-	fmt.Fprintln(w, "There was an error")
-	fmt.Fprint(w, err)
+	msg, _ := json.Marshal(t)
+	w.Write(msg)
 
 }
 
 func addTask(w http.ResponseWriter, r *http.Request) {
-	d := json.NewDecoder(r.Body)
-	d.DisallowUnknownFields()
-	var item Note
-	err := d.Decode(&item)
+	item, err := decodeAndRetBody(r)
 	if err != nil {
 		errHandler(w, err)
 		return
@@ -117,7 +112,30 @@ func addTask(w http.ResponseWriter, r *http.Request) {
 	noteList = append(noteList, item)
 	// fmt.Println(item)
 
-}	
+}
+func decodeAndRetBody(r *http.Request) (Note, error) {
+	d := json.NewDecoder(r.Body)
+	d.DisallowUnknownFields()
+	var item Note
+	err := d.Decode(&item)
+	return item, err
+
+}
+func modifyTask(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
+	updateItem, err := decodeAndRetBody(r)
+	if err != nil {
+		errHandler(w, err)
+		return
+	}
+	for index, noteItem := range noteList {
+		if noteItem.Key == id {
+			noteList[index] = updateItem
+			return
+		}
+	}
+	pageNotFoundHandler(w, r)
+}
 
 
 func main() {
@@ -131,13 +149,11 @@ func main() {
 	noteRouter.HandleFunc("/task/", addTask).Methods("POST")
 
 	noteRouter.HandleFunc("/task/{id}", fetchTaskById).Methods("GET")
-	// noteRouter.HandleFunc("/task/{id}", modifyTask).Methods("PUT")
+	noteRouter.HandleFunc("/task/{id}", modifyTask).Methods("PUT")
+	// noteRouter.HandleFunc("/task/{id}", removeTask).Methods("DELETE")
+
 
 	http.Handle("/", homeRouter)
-	// http.HandleFunc("/", HomeHandler)
 	log.Fatal(http.ListenAndServe(":8000", nil))
 
-	// for _, item := range noteList {
-	// 	fmt.Println(item)
-	// }
 }
