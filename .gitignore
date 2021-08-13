@@ -4,3 +4,5 @@
 DataFiles/
 *.csv
 *.mod 
+*.sum
+
