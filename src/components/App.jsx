@@ -3,8 +3,8 @@ import Header from './Header';
 import Note from "./Note";
 import Footer from "./Footer";
 import CreateArea from "./CreateArea";
-// import EdiText from "react-editext";
-// import { func } from "assert-plus";
+import CenteredGrid from "./MaterialUI-example";
+
 
 function App() {
     const [notes, setNotes] = useState([]);
@@ -59,11 +59,7 @@ function App() {
                 onSave={onSaveText}
             />);
         })}
-        {/* <EdiText 
-            type="text"
-            value="What is Real?"
-            onSave={onSaveText}
-        /> */}
+        <CenteredGrid />
         <Footer />
         </div>
     );
